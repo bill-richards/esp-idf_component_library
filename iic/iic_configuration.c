@@ -34,14 +34,15 @@ gsdc_iic_connected_device_t * iic_configuration_get_connected_device(int index) 
     return &IIC_Configuration.ConnectedDevices[index];
 }
 
-
-
 void iic_configuration_load_iic_configuration()
 {
-    ESP_LOGV(IIC_CONFIGURATION_TAG, "Preparing the configuration_file_t ...");
-    register_configuration_file(IIC_Configuration.SpiffsInfo->partition_label, 
-                                IIC_Configuration.SpiffsInfo->base_path, 
-                                IIC_Configuration.SpiffsInfo->file_name);
+    ESP_LOGV(IIC_CONFIGURATION_TAG, "Preparing the gsdc_configuration_file_t ...");
+    gsdc_configuration_file_descriptor_t descriptor = {
+        IIC_Configuration.SpiffsInfo->partition_label,
+        IIC_Configuration.SpiffsInfo->base_path,
+        IIC_Configuration.SpiffsInfo->file_name
+    };
+    register_configuration_file(&descriptor);
 
     ESP_LOGV(IIC_CONFIGURATION_TAG, "Reading the configuration file ...");
     Configuration_File.read_content();
