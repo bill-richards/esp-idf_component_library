@@ -192,5 +192,5 @@ void gsdc_iic_master_task_create(gsdc_iic_configuration_t * iic_configuration)
 {
     internal_initialize_if_needed();
     internal_create_incoming_data_queue(iic_configuration);
-    xTaskCreatePinnedToCore(internal_master_writer_task, "internal_master_writer_task", ((I2C_SLAVE_TX_BUF_LEN * 2)+(sizeof(gsdc_led_controller_t)*2)), (void *)iic_configuration, 10, NULL, 1);
+    xTaskCreatePinnedToCore(internal_master_writer_task, "internal_master_writer_task", 2048, (void *)iic_configuration, 10, NULL, 1);
 }

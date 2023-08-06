@@ -87,7 +87,7 @@ void internal_client_task(void * parameters)
         szCommand[GSDC_IIC_COMMAND_LENGTH] = '\0';
         if(size <= 0) { continue; }
         
-        xTaskCreate(command_received_callback_task, "command_received_callback_task", I2C_SLAVE_TX_BUF_LEN / 2, (void *)szCommand, 10, NULL);
+        xTaskCreate(command_received_callback_task, "command_received_callback_task", 2048, (void *)szCommand, 10, NULL);
         portYIELD();
     }
 }

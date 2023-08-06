@@ -41,7 +41,9 @@
 #define I2C_NUMBER(num) _I2C_NUMBER(num)
 
 #define GSDC_IIC_COMMAND_LENGTH 2
+
 #define GSDC_IIC_COMMANDS_SEND_ALL_DATA "4C"
+#define GSDC_IIC_COMMANDS_RESTART_MCU   "AA"
 
 #ifdef __cplusplus
 extern "C" {
