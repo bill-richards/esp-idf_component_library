@@ -4,12 +4,14 @@
 #include "led_controller.h"
 #include "esp_system_includes.h"
 #include "esp_logging.h"
+#include "freertos/semphr.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
 #include <string.h>
+
 
 typedef struct {
     gsdc_iic_configuration_t * configuration;
@@ -32,7 +34,7 @@ static const char * IIC_MASTER_TAG = "iic_master";
 static const char * IIC_MASTER_TASK_TAG = "iic_master_task";
 
 static uint8_t COMMAND[] = GSDC_IIC_COMMANDS_SEND_ALL_DATA;
-
+SemaphoreHandle_t Reset_Semaphore = NULL;
 
 void internal_client_data_received_task(void * parameters)
 {
@@ -111,7 +113,29 @@ void internal_initialize_if_needed()
     internal_i2c_master_init();
 }
 
-void internal_master_writer_task(void *parameters)
+void internal_master_reset_task(void * parameters)
+{
+    gsdc_iic_configuration_t * configuration = (gsdc_iic_configuration_t*) parameters;
+    uint8_t RESET_COMMAND[] = GSDC_IIC_COMMANDS_RESTART_MCU;
+    
+    while(true)
+    {
+        if(Reset_Semaphore == NULL) { vTaskDelay(pdMS_TO_TICKS(10)); continue; }
+        if(xSemaphoreTake(Reset_Semaphore, pdMS_TO_TICKS(10)) != pdTRUE ) { vTaskDelay(pdMS_TO_TICKS(10)); continue; }
+
+        ESP_LOGW(IIC_MASTER_TAG, "Sending reset command to %u attached IIC devices", configuration->ConnectedDeviceCount);
+        for(uint8_t index = 0; index < configuration->ConnectedDeviceCount; index++)
+        {
+            gsdc_iic_connected_device_t * current_device = configuration->get_connected_device(index);
+            internal_send_request_to_device(RESET_COMMAND, current_device, NULL, NULL);
+        }
+
+        xSemaphoreGive(Reset_Semaphore);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void internal_master_writer_task(void * parameters)
  {
     gsdc_iic_configuration_t * configuration = (gsdc_iic_configuration_t*) parameters;
 
@@ -120,13 +144,6 @@ void internal_master_writer_task(void *parameters)
 
     long duration, loop_start, loop_stop;
     TickType_t xFrequency = pdMS_TO_TICKS(MASTER_POLLING_PERIOD), xLastWakeTime = xTaskGetTickCount ();
-
-    uint8_t RESET_COMMAND[] = GSDC_IIC_COMMANDS_RESTART_MCU;
-    for(uint8_t index = 0; index < configuration->ConnectedDeviceCount; index++)
-    {
-        gsdc_iic_connected_device_t * current_device = configuration->get_connected_device(index);
-        internal_send_request_to_device(RESET_COMMAND, current_device, read_indicator, write_indicator);
-    }
 
     for( ;; )
     {
@@ -159,9 +176,9 @@ size_t internal_send_request_to_device(uint8_t * command, gsdc_iic_connected_dev
     internal_initialize_if_needed();
 
     ESP_LOGV(IIC_MASTER_TAG, "Master requesting from IIC device : %2X ", device->I2CAddress);
-    write_indicator->invert_led_state(write_indicator);
+    INVERT_LED(write_indicator)
     ret = iic_master_write_to_slave(device->I2CAddress, command, strlen((char*)command));
-    write_indicator->invert_led_state(write_indicator);
+    INVERT_LED(write_indicator)
 
     if(ret == ESP_ERR_TIMEOUT)
     {
@@ -181,12 +198,13 @@ size_t internal_send_request_to_device(uint8_t * command, gsdc_iic_connected_dev
     }
 
     if(ret != ESP_OK) { return 0; }
-    read_indicator->invert_led_state(read_indicator);
+    INVERT_LED(read_indicator)
     iic_master_read_from_slave(device);
-    read_indicator->invert_led_state(read_indicator);
+    INVERT_LED(read_indicator)
 
     return device->DataLength;
 }
+
 
 // ////////////////////////////////////////////////////
 //
@@ -194,10 +212,18 @@ size_t internal_send_request_to_device(uint8_t * command, gsdc_iic_connected_dev
 //
 // ////////////////////////////////////////////////////
 
-
+void gsdc_iic_send_reset_command_to_connected_devices(void)
+{
+    xSemaphoreGive(Reset_Semaphore);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    xSemaphoreTake(Reset_Semaphore, portMAX_DELAY);
+}
 void gsdc_iic_master_task_create(gsdc_iic_configuration_t * iic_configuration)
 {
+    Reset_Semaphore = xSemaphoreCreateBinary();
+    
     internal_initialize_if_needed();
     internal_create_incoming_data_queue(iic_configuration);
+    xTaskCreatePinnedToCore(internal_master_reset_task, "internal_master_reset_task", 2048, (void *)iic_configuration, 2, NULL, 0);
     xTaskCreatePinnedToCore(internal_master_writer_task, "internal_master_writer_task", 2048, (void *)iic_configuration, 10, NULL, 1);
 }

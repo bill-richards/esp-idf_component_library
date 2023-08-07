@@ -10,6 +10,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief Using this Macro will guard against NULL gsdc_led_controller_t Pointer
+ */
+#define INVERT_LED(controller) if(controller != NULL) { controller->invert_led_state(controller); }
+
+
 /**
  * @brief structure used to control a configured LED
  * @param ControlledLed (gsdc_controlled_led_t * ) a structure representing the LED being controlled

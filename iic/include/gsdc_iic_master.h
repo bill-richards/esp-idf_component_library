@@ -11,6 +11,9 @@ extern "C" {
  * @param iic_configuration an instantiated gsdc_iic_configuration_t
  */
 void gsdc_iic_master_task_create(gsdc_iic_configuration_t * iic_configuration);
+void gsdc_iic_send_reset_command_to_connected_devices(void);
+
+extern SemaphoreHandle_t Reset_Semaphore;
 
 #ifdef __cplusplus
 }
