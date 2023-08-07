@@ -121,6 +121,13 @@ void internal_master_writer_task(void *parameters)
     long duration, loop_start, loop_stop;
     TickType_t xFrequency = pdMS_TO_TICKS(MASTER_POLLING_PERIOD), xLastWakeTime = xTaskGetTickCount ();
 
+    uint8_t RESET_COMMAND[] = GSDC_IIC_COMMANDS_RESTART_MCU;
+    for(uint8_t index = 0; index < configuration->ConnectedDeviceCount; index++)
+    {
+        gsdc_iic_connected_device_t * current_device = configuration->get_connected_device(index);
+        internal_send_request_to_device(RESET_COMMAND, current_device, read_indicator, write_indicator);
+    }
+
     for( ;; )
     {
         loop_start = xTaskGetTickCount();

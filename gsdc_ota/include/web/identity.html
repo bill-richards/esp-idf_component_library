@@ -32,18 +32,12 @@
                 <tr>
                     <td colspan="2" align="right">
                         <label class="label" for="is_unique">unique network</label>
-                        <input checked type="checkbox" id="is_unique" onchange="unique_change()" />
+                        <input disabled checked type="checkbox" id="is_unique" onchange="unique_change()" />
                     </td>
                 </tr>
                 <tr>
                     <td class="label">wi-fi ssid</td>
                     <td><input class="input" type="text" id="ssid"></td>
-                </tr>
-                <tr>
-                    <td colspan="2" align="right">
-                        <label class="label" for="is_ap">Is access point</label>
-                        <input type="checkbox" id="is_ap" onchange="ap_change()" />
-                    </td>
                 </tr>
                 <tr id="ap_password">
                     <td class="label">wi-fi password</td>
@@ -80,6 +74,7 @@
 
             function unique_change(){
                 mIsUnique = document.querySelector('input[id="is_unique"]').checked;
+                ap_change(); 
                 iic_address_change();
             }
 
@@ -98,7 +93,7 @@
             }
 
             function ap_change() {
-                let isAccessPoint = document.querySelector('input[id="is_ap"]').checked;
+                let isAccessPoint = !document.querySelector('input[id="is_unique"]').checked;
                 document.querySelector('tr[id="ap_password"]').style.visibility = isAccessPoint ? "visible" : "collapse";
             }
 
@@ -108,7 +103,7 @@
                 let ssid = document.querySelector('input[id="ssid"]').value;
                 let iica = document.querySelector('input[id="iica"]').value;
                 let isMaster = document.querySelector('input[id="is_master"]').checked;
-                let isAccessPoint = document.querySelector('input[id="is_ap"]').checked;
+                let isAccessPoint = !document.querySelector('input[id="is_unique"]').checked;
 
                 let url = "/identity?ssid=" + ssid + "&iica=" + iica;
                 if(isAccessPoint){

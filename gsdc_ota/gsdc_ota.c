@@ -58,8 +58,8 @@ esp_err_t identity_post_handler(httpd_req_t *req)
 	}
 
 	// Successful Upload: do something with the sent data
-	httpd_resp_sendstr(req, "Configuration update complete, rebooting now!\n");
 	free(buff);
+	httpd_resp_sendstr(req, "Configuration update complete, rebooting now!\n");
 	
 	vTaskDelay(500 / portTICK_PERIOD_MS);
 	esp_restart();
@@ -70,7 +70,7 @@ esp_err_t identity_post_handler(httpd_req_t *req)
 /*
  * Handle OTA file upload
  */
-esp_err_t update_post_handler(httpd_req_t *req)
+esp_err_t ota_post_handler(httpd_req_t *req)
 {
 	char buf[1000];
 	esp_ota_handle_t ota_handle;
@@ -140,9 +140,9 @@ httpd_uri_t identity_post = {
 };
 
 httpd_uri_t ota_post = {
-	.uri	  = "/update",
+	.uri	  = "/ota",
 	.method   = HTTP_POST,
-	.handler  = update_post_handler,
+	.handler  = ota_post_handler,
 	.user_ctx = NULL
 };
 
