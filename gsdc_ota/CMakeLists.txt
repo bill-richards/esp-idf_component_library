@@ -1,10 +1,11 @@
 SET(app_sources
         gsdc_ota.c
-        ota_subsystem.c
+        gsdc_ota_subsystem.c
 )
 
 SET(embeded_files
         include/web/index.html
+        include/web/identity.html
 )
 
 SET(components
@@ -16,7 +17,7 @@ SET(components
         freertos
 )
 
-set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
+#set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
 
 idf_component_register(SRCS ${app_sources}
                        INCLUDE_DIRS "include"

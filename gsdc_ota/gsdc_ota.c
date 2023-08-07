@@ -9,8 +9,7 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <esp_wifi.h>
-
-// #define WIFI_SSID "ESP32 OTA Update"
+#include <esp_logging.h>
 
 /*
  * Serve OTA update portal (index.html)
@@ -18,12 +17,53 @@
 extern const uint8_t index_html_start[] asm("_binary_index_html_start");
 extern const uint8_t index_html_end[] asm("_binary_index_html_end");
 
-// char * WIFI_SSID = "ESP32 OTA Update";
+extern const uint8_t identity_html_start[] asm("_binary_identity_html_start");
+extern const uint8_t identity_html_end[] asm("_binary_identity_html_end");
 
+static const char * OTA_TAG = "ota-subsystem";
+
+
+esp_err_t identity_get_handler(httpd_req_t *req)
+{
+	httpd_resp_send(req, (const char *) identity_html_start, identity_html_end-identity_html_start);
+	return ESP_OK;
+}
 
 esp_err_t index_get_handler(httpd_req_t *req)
 {
-	httpd_resp_send(req, (const char *) index_html_start, index_html_end - index_html_start);
+	httpd_resp_send(req, (const char *) index_html_start, index_html_end-index_html_start);
+	return ESP_OK;
+}
+
+esp_err_t identity_post_handler(httpd_req_t *req)
+{
+	char * buff = (char *)calloc(1000, sizeof(char));
+	int remaining = req->content_len;
+	ESP_LOGI(OTA_TAG, "received POST of length %u to : %s", remaining, req->uri);
+
+
+	while (remaining > 0) {
+		int recv_len = httpd_req_recv(req, buff, MIN(remaining, strlen(buff)));
+
+		// Timeout Error: Just retry
+		if (recv_len == HTTPD_SOCK_ERR_TIMEOUT) {
+			continue;
+
+		// Serious Error: Abort OTA
+		} else if (recv_len <= 0) {
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Protocol Error");
+			return ESP_FAIL;
+		}
+		remaining -= recv_len;
+	}
+
+	// Successful Upload: do something with the sent data
+	httpd_resp_sendstr(req, "Configuration update complete, rebooting now!\n");
+	free(buff);
+	
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	esp_restart();
+
 	return ESP_OK;
 }
 
@@ -85,7 +125,21 @@ httpd_uri_t index_get = {
 	.user_ctx = NULL
 };
 
-httpd_uri_t update_post = {
+httpd_uri_t identity_get = {
+	.uri	  = "/identity",
+	.method   = HTTP_GET,
+	.handler  = identity_get_handler,
+	.user_ctx = NULL
+};
+
+httpd_uri_t identity_post = {
+	.uri	  = "/identity",
+	.method   = HTTP_POST,
+	.handler  = identity_post_handler,
+	.user_ctx = NULL
+};
+
+httpd_uri_t ota_post = {
 	.uri	  = "/update",
 	.method   = HTTP_POST,
 	.handler  = update_post_handler,
@@ -100,7 +154,9 @@ esp_err_t http_server_init(void)
 
 	if (httpd_start(&http_server, &config) == ESP_OK) {
 		httpd_register_uri_handler(http_server, &index_get);
-		httpd_register_uri_handler(http_server, &update_post);
+		httpd_register_uri_handler(http_server, &identity_get);
+		httpd_register_uri_handler(http_server, &identity_post);
+		httpd_register_uri_handler(http_server, &ota_post);
 	}
 
 	return http_server == NULL ? ESP_FAIL : ESP_OK;
@@ -122,7 +178,6 @@ esp_err_t gsdc_ota_configure_wifi(char * ssid)
 
 	wifi_config_t wifi_config = {
 		.ap = {
-			// .ssid = ssid,
 			.ssid_len = strlen(ssid),
 			.channel = 6,
 			.authmode = WIFI_AUTH_OPEN,

@@ -6,14 +6,15 @@
 #include <esp_logging.h>                        //
 #include <nvs_flash.h>                          //
 #include "gsdc_ota.h"							//
+#include "gsdc_ota_subsystem.h"					//
 // //////////////////////////////////////////// //
 
 static const char * OTA_SUBSYSTEM_TAG = "ota-subsystem";
 
-void ota_subsystem_initialize(uint8_t iicAddress)
+void gsdc_ota_subsystem_initialize(uint8_t iicAddress)
 {
     char ssid[32];
-    sprintf(ssid, "gsdc-ota-%x", iicAddress);
+    sprintf(ssid, "%s-%x", OTA_SUBSYSTEM_TAG, iicAddress);
 
 	esp_err_t ret = nvs_flash_init();
 
@@ -25,6 +26,7 @@ void ota_subsystem_initialize(uint8_t iicAddress)
 	ESP_ERROR_CHECK(ret);
 	ESP_ERROR_CHECK(gsdc_ota_configure_wifi(ssid));
 	ESP_ERROR_CHECK(http_server_init());
+	ESP_LOGW(OTA_SUBSYSTEM_TAG, "Wi-Fi SSID: %s", ssid);
 
 	/* Mark current app as valid */
 	const esp_partition_t *partition = esp_ota_get_running_partition();

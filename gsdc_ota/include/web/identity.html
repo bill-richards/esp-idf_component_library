@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <title>IIC Configuration</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <style>
+            html {font-family: Arial; display: inline-block; text-align: center;}
+            h2 {font-size: 3.0rem;}
+            p {font-size: 3.0rem;}
+            body {max-width: 600px; margin:0px auto; padding-bottom: 25px;}
+            .label { font-size: 1.0rem; text-align: right; }
+            .input { width: 20em; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+            #client_list_view { visibility: collapse;}
+            #ap_password { visibility: collapse;}
+            #nav { text-align: right; }
+            #nav a { text-decoration: none;}
+        </style>
+    </head>
+    <body onload="page_loaded()">
+        <h2>IIC Configuration</h2>
+        <div id="nav">
+            <a href="/"><< back</a>
+        </div>
+        <table align="center" >
+            <tbody>
+                <tr>
+                    <td class="label">wi-fi address</td>
+                    <td><input class="input" type="text" id="ip" value="192.168.4.1" disabled></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="right">
+                        <label class="label" for="is_unique">unique network</label>
+                        <input checked type="checkbox" id="is_unique" onchange="unique_change()" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label">wi-fi ssid</td>
+                    <td><input class="input" type="text" id="ssid"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="right">
+                        <label class="label" for="is_ap">Is access point</label>
+                        <input type="checkbox" id="is_ap" onchange="ap_change()" />
+                    </td>
+                </tr>
+                <tr id="ap_password">
+                    <td class="label">wi-fi password</td>
+                    <td><input class="input" type="text" id="appw" value=""></td>
+                </tr>
+                <tr>
+                    <td class="label">IIC address</td>
+                    <td><input class="input" type="text" id="iica" oninput="iic_address_change()"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="right">
+                        <label class="label" for="is_master">Is IIC Master</label>
+                        <input type="checkbox" id="is_master" onchange="role_change()" />
+                    </td>
+                </tr>
+                <tr id="client_list_view">
+                    <td class="label">IIC clients</td>
+                    <td><input class="input" type="text" id="iicc" value="A1 A2 A3 A4 A5 A6 A7 A8 A9"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="right" ><input type="button" id="set" onClick="sendData()" value="update"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <script>
+            let mIsUnique = true;
+
+            function page_loaded(){
+                document.querySelector('input[id="iica"]').value = "A0";
+                document.querySelector('input[id="is_unique"]').checked = true;
+                unique_change();
+            }
+
+            function unique_change(){
+                mIsUnique = document.querySelector('input[id="is_unique"]').checked;
+                iic_address_change();
+            }
+
+            function iic_address_change(){
+                let iica = document.querySelector('input[id="iica"]').value;
+                let value = "ota-subsystem";
+                if(mIsUnique && iica != "") {
+                    value = value + "-" + iica;
+                }
+                document.querySelector('input[id="ssid"]').value = value;
+            }
+
+            function role_change() {
+                let isMaster = document.querySelector('input[id="is_master"]').checked;
+                document.querySelector('tr[id="client_list_view"]').style.visibility = isMaster ? "visible" : "collapse";
+            }
+
+            function ap_change() {
+                let isAccessPoint = document.querySelector('input[id="is_ap"]').checked;
+                document.querySelector('tr[id="ap_password"]').style.visibility = isAccessPoint ? "visible" : "collapse";
+            }
+
+            function sendData() {
+                let xhr = new XMLHttpRequest();
+
+                let ssid = document.querySelector('input[id="ssid"]').value;
+                let iica = document.querySelector('input[id="iica"]').value;
+                let isMaster = document.querySelector('input[id="is_master"]').checked;
+                let isAccessPoint = document.querySelector('input[id="is_ap"]').checked;
+
+                let url = "/identity?ssid=" + ssid + "&iica=" + iica;
+                if(isAccessPoint){
+                    let appw = document.querySelector('input[id="appw"]').value;
+                    url = url + "&appw="+ appw;
+                }
+                if(isMaster){
+                    let iicc = document.querySelector('input[id="iicc"]').value;
+                    url = url + "&iicc="+ iicc;
+                }
+                
+                xhr.open("POST", url, true); 
+                
+                xhr.send();
+            }
+        </script>
+    </body>
+</html>

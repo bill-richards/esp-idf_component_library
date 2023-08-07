@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void ota_subsystem_initialize(uint8_t iicAddress);
+void gsdc_ota_subsystem_initialize(uint8_t iicAddress);
 
 #ifdef __cplusplus
 }
