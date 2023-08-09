@@ -146,7 +146,7 @@ bool spiffs_configure_and_initialize_vfs(const char * base_path, const char * pa
         } else if (ret == ESP_ERR_NOT_FOUND) {
             ESP_LOGE(SPIFFS_FILE_TAG, "Failed to find SPIFFS partition");
         } else {
-            ESP_LOGE(SPIFFS_FILE_TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+            ESP_LOGE(SPIFFS_FILE_TAG, "Failed to initialize SPIFFS (%s). If you have previously loaded a configuraiton file. Do NOT treat this as an error", esp_err_to_name(ret));
         }
         return false;
     }

@@ -1,5 +1,6 @@
 #include "gsdc_ota.h"
 #include <string.h>
+#include <ctype.h>
 
 #include <freertos/FreeRTOS.h>
 #include <esp_http_server.h>
@@ -10,57 +11,85 @@
 #include <sys/param.h>
 #include <esp_wifi.h>
 #include <esp_logging.h>
+#include <configuration_file.h>
+#include <gsdc_string_utils.h>
 
 /*
  * Serve OTA update portal (index.html)
  */
 extern const uint8_t index_html_start[] asm("_binary_index_html_start");
 extern const uint8_t index_html_end[] asm("_binary_index_html_end");
-
+/*
+ * Serve Configuration portal (identity.html)
+ */
 extern const uint8_t identity_html_start[] asm("_binary_identity_html_start");
 extern const uint8_t identity_html_end[] asm("_binary_identity_html_end");
 
 static const char * OTA_TAG = "ota-subsystem";
+gsdc_ota_configuration_file_t * Configuration_File;
 
-
-esp_err_t identity_get_handler(httpd_req_t *req)
+esp_err_t internal_configuration_get_handler(httpd_req_t *req)
 {
-	httpd_resp_send(req, (const char *) identity_html_start, identity_html_end-identity_html_start);
+	size_t html_length = identity_html_end-identity_html_start;
+	char * html = calloc(html_length, sizeof(char));
+	memcpy(html, identity_html_start, html_length);
+
+	config_key_value_pair_t pair;
+	Configuration_File->get_configuration_item("IIC", &pair, Configuration_File);
+	char * modified_html = gsdc_string_utils_replace_substring(html, "CONFIGIICADDRESS", pair.Value);
+
+	Configuration_File->get_configuration_item("CLIENTS", &pair, Configuration_File);
+	modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGCLIENTLIST", pair.Value);
+
+	Configuration_File->get_configuration_item("SSID", &pair, Configuration_File);
+	modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGSSID", pair.Value);
+
+	httpd_resp_send(req, modified_html, strlen(modified_html));
+	free(modified_html);
+	free(html);
 	return ESP_OK;
 }
 
-esp_err_t index_get_handler(httpd_req_t *req)
+esp_err_t internal_index_get_handler(httpd_req_t *req)
 {
 	httpd_resp_send(req, (const char *) index_html_start, index_html_end-index_html_start);
 	return ESP_OK;
 }
 
-esp_err_t identity_post_handler(httpd_req_t *req)
+esp_err_t internal_configuration_post_handler(httpd_req_t *req)
 {
-	char * buff = (char *)calloc(1000, sizeof(char));
-	int remaining = req->content_len;
-	ESP_LOGI(OTA_TAG, "received POST of length %u to : %s", remaining, req->uri);
+	ESP_LOGI(OTA_TAG, "received POST of length %u to : %s", req->content_len, req->uri);
 
+    char * tail;
+    char * inner_tail;
+	char * key = calloc(CONFIGURATION_FILE_MAXIMUM_KEY_LENGTH, sizeof(char));
+	char * value = calloc(CONFIGURATION_FILE_MAXIMUM_VALUE_LENGTH, sizeof(char)); 
 
-	while (remaining > 0) {
-		int recv_len = httpd_req_recv(req, buff, MIN(remaining, strlen(buff)));
+	char * head = strtok_r((char *)req->uri, "?", &tail);
+	char * pair = strtok_r(tail, "&", &tail);
 
-		// Timeout Error: Just retry
-		if (recv_len == HTTPD_SOCK_ERR_TIMEOUT) {
-			continue;
+	while(pair != NULL)
+	{
+		head = strtok_r(pair, "=", &inner_tail);
+		memcpy(key, head, strlen(head));
 
-		// Serious Error: Abort OTA
-		} else if (recv_len <= 0) {
-			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Protocol Error");
-			return ESP_FAIL;
-		}
-		remaining -= recv_len;
+		// We have to store the pointer so that we can delete it immediately to avoid the possibillity of a stack overflow
+		char * decoded = gsdc_string_utils_url_decode(inner_tail);
+		memcpy(value, decoded, strlen(inner_tail));
+		free(decoded);
+
+		Configuration_File->set_configuration_item(key, value, Configuration_File);
+		memset(key, '\0', CONFIGURATION_FILE_MAXIMUM_KEY_LENGTH);
+		memset(value, '\0', CONFIGURATION_FILE_MAXIMUM_VALUE_LENGTH);
+
+		pair = strtok_r(tail, "&", &tail);
 	}
+	free(key);
+	free(value);
 
-	// Successful Upload: do something with the sent data
-	free(buff);
+	Configuration_File->save_configuration(Configuration_File);
 	httpd_resp_sendstr(req, "Configuration update complete, rebooting now!\n");
-	
+		
 	vTaskDelay(500 / portTICK_PERIOD_MS);
 	esp_restart();
 
@@ -70,7 +99,7 @@ esp_err_t identity_post_handler(httpd_req_t *req)
 /*
  * Handle OTA file upload
  */
-esp_err_t ota_post_handler(httpd_req_t *req)
+esp_err_t internal_ota_post_handler(httpd_req_t *req)
 {
 	char buf[1000];
 	esp_ota_handle_t ota_handle;
@@ -118,45 +147,46 @@ esp_err_t ota_post_handler(httpd_req_t *req)
 /*
  * HTTP Server
  */
-httpd_uri_t index_get = {
+httpd_uri_t internal_index_get = {
 	.uri	  = "/",
 	.method   = HTTP_GET,
-	.handler  = index_get_handler,
+	.handler  = internal_index_get_handler,
 	.user_ctx = NULL
 };
 
-httpd_uri_t identity_get = {
+httpd_uri_t internal_configuration_get = {
 	.uri	  = "/identity",
 	.method   = HTTP_GET,
-	.handler  = identity_get_handler,
+	.handler  = internal_configuration_get_handler,
 	.user_ctx = NULL
 };
 
-httpd_uri_t identity_post = {
+httpd_uri_t internal_configuration_post = {
 	.uri	  = "/identity",
 	.method   = HTTP_POST,
-	.handler  = identity_post_handler,
+	.handler  = internal_configuration_post_handler,
 	.user_ctx = NULL
 };
 
-httpd_uri_t ota_post = {
+httpd_uri_t internal_ota_post = {
 	.uri	  = "/ota",
 	.method   = HTTP_POST,
-	.handler  = ota_post_handler,
+	.handler  = internal_ota_post_handler,
 	.user_ctx = NULL
 };
 
-esp_err_t http_server_init(void)
+esp_err_t http_server_init(gsdc_ota_configuration_file_t * configurationFile)
 {
+	Configuration_File = configurationFile;
 	static httpd_handle_t http_server = NULL;
 
 	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
 	if (httpd_start(&http_server, &config) == ESP_OK) {
-		httpd_register_uri_handler(http_server, &index_get);
-		httpd_register_uri_handler(http_server, &identity_get);
-		httpd_register_uri_handler(http_server, &identity_post);
-		httpd_register_uri_handler(http_server, &ota_post);
+		httpd_register_uri_handler(http_server, &internal_index_get);
+		httpd_register_uri_handler(http_server, &internal_configuration_get);
+		httpd_register_uri_handler(http_server, &internal_configuration_post);
+		httpd_register_uri_handler(http_server, &internal_ota_post);
 	}
 
 	return http_server == NULL ? ESP_FAIL : ESP_OK;

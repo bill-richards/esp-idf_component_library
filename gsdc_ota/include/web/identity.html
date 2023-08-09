@@ -45,7 +45,7 @@
                 </tr>
                 <tr>
                     <td class="label">IIC address</td>
-                    <td><input class="input" type="text" id="iica" oninput="iic_address_change()"></td>
+                    <td><input class="input" type="text" id="iica" oninput="iic_address_change()" ></td>
                 </tr>
                 <tr>
                     <td colspan="2" align="right">
@@ -55,7 +55,7 @@
                 </tr>
                 <tr id="client_list_view">
                     <td class="label">IIC clients</td>
-                    <td><input class="input" type="text" id="iicc" value="A1 A2 A3 A4 A5 A6 A7 A8 A9"></td>
+                    <td><input class="input" type="text" id="iicc" ></td>
                 </tr>
                 <tr>
                     <td colspan="2" align="right" ><input type="button" id="set" onClick="sendData()" value="update"></td>
@@ -67,7 +67,9 @@
             let mIsUnique = true;
 
             function page_loaded(){
-                document.querySelector('input[id="iica"]').value = "A0";
+                document.querySelector('input[id="iica"]').value = "CONFIGIICADDRESS";
+                document.querySelector('input[id="iicc"]').value = "CONFIGCLIENTLIST";
+                document.querySelector('input[id="ssid"]').value = "CONFIGSSID";
                 document.querySelector('input[id="is_unique"]').checked = true;
                 unique_change();
             }
@@ -105,14 +107,14 @@
                 let isMaster = document.querySelector('input[id="is_master"]').checked;
                 let isAccessPoint = !document.querySelector('input[id="is_unique"]').checked;
 
-                let url = "/identity?ssid=" + ssid + "&iica=" + iica;
+                let url = "/identity?SSID=" + ssid + "&IIC=" + iica;
                 if(isAccessPoint){
                     let appw = document.querySelector('input[id="appw"]').value;
-                    url = url + "&appw="+ appw;
+                    url = url + "&PWD="+ appw;
                 }
                 if(isMaster){
                     let iicc = document.querySelector('input[id="iicc"]').value;
-                    url = url + "&iicc="+ iicc;
+                    url = url + "&CLIENTS="+ iicc;
                 }
                 
                 xhr.open("POST", url, true); 

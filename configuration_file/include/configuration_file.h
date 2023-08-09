@@ -38,24 +38,26 @@ typedef struct {
     char Value[CONFIGURATION_FILE_MAXIMUM_VALUE_LENGTH];               // MAXIMUM_VALUE_LENGTH
 } config_key_value_pair_t;
 
+typedef struct gsdc_configuration_file gsdc_configuration_file_t;
+
 /**
  * @brief Represents a configuration file stored in a SPIFFS file system
  */
-typedef struct {
+struct gsdc_configuration_file {
     const char * Name;                              // MAXIMUM_FILE_NAME_LENGTH
     const char * BasePath;                          // MAXIMUM_BASE_PATH_LENGTH
     const char * PartitionLabel;                    // MAXIMUM_PARTITION_LABEL_LENGTH
     int Configuration_Count;
     config_key_value_pair_t * Configuration_Items;  // SPIFFS_MAXIMUM_LINE_COUNT
 
-    void (*clear_all)(void);
-    char* (*get_file_path)(void);
-    bool (*get_configuration_item)(const char * key, config_key_value_pair_t * key_value_pair);
-    void (*read_content)(void);
-    bool (*save_configuration)(void);
-    bool (*set_configuration_item)(const char * key, const char * value);
-    void (*output_all_configuration_items)(void);
-} gsdc_configuration_file_t;
+    void (*clear_all)(gsdc_configuration_file_t * configuration_file);
+    char* (*get_file_path)(gsdc_configuration_file_t * configuration_file);
+    bool (*get_configuration_item)(const char * key, config_key_value_pair_t * key_value_pair, gsdc_configuration_file_t * configuration_file);
+    void (*read_content)(gsdc_configuration_file_t * configuration_file);
+    bool (*save_configuration)(gsdc_configuration_file_t * configuration_file);
+    bool (*set_configuration_item)(const char * key, const char * value, gsdc_configuration_file_t * configuration_file);
+    void (*output_all_configuration_items)(gsdc_configuration_file_t * configuration_file);
+} ;
 
 /**
  * @brief Describes the configuraiton file in terms of SPIFFS partition, base path, and the file name.
@@ -73,10 +75,7 @@ typedef struct {
  * @brief Instantiate a gsdc_configuration_file_t
  * @param fileDescriptor a pointer to an instance of a gsdc_configuration_file_descriptor_t which describes the configuration file
  */
-void register_configuration_file(gsdc_configuration_file_descriptor_t * fileDescriptor);
-
-// @brief The instantiated gsdc_configuration_file_t
-extern gsdc_configuration_file_t Configuration_File;
+gsdc_configuration_file_t * register_configuration_file(gsdc_configuration_file_descriptor_t * fileDescriptor);
 
 #ifdef __cplusplus
 }

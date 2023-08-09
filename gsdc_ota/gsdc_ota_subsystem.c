@@ -9,12 +9,25 @@
 #include "gsdc_ota_subsystem.h"					//
 // //////////////////////////////////////////// //
 
+gsdc_ota_configuration_file_t * internal_register_configuration_file(gsdc_ota_configuration_file_descriptor_t * fileDescriptor);
+
 static const char * OTA_SUBSYSTEM_TAG = "ota-subsystem";
 
-void gsdc_ota_subsystem_initialize(uint8_t iicAddress)
+
+gsdc_ota_configuration_file_t * internal_register_configuration_file(gsdc_ota_configuration_file_descriptor_t * fileDescriptor)
 {
-    char ssid[32];
-    sprintf(ssid, "%s-%x", OTA_SUBSYSTEM_TAG, iicAddress);
+	return register_configuration_file(fileDescriptor);
+}
+
+void gsdc_ota_subsystem_initialize(gsdc_ota_configuration_file_descriptor_t * configurationDescriptor)
+{
+	gsdc_ota_configuration_file_t * configuration = internal_register_configuration_file(configurationDescriptor);
+	config_key_value_pair_t item;
+	configuration->read_content(configuration);
+	configuration->get_configuration_item("SSID", &item, configuration);
+
+    char ssid[64];
+    sprintf(ssid, "%s", item.Value);
 
 	esp_err_t ret = nvs_flash_init();
 
@@ -25,7 +38,7 @@ void gsdc_ota_subsystem_initialize(uint8_t iicAddress)
 
 	ESP_ERROR_CHECK(ret);
 	ESP_ERROR_CHECK(gsdc_ota_configure_wifi(ssid));
-	ESP_ERROR_CHECK(http_server_init());
+	ESP_ERROR_CHECK(http_server_init(configuration));
 	ESP_LOGW(OTA_SUBSYSTEM_TAG, "Wi-Fi SSID: %s", ssid);
 
 	/* Mark current app as valid */

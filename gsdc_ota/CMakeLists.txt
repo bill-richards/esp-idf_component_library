@@ -9,6 +9,8 @@ SET(embeded_files
 )
 
 SET(components
+        gsdc_utils
+        configuration_file
         esp_includes
         esp_http_server
         app_update
