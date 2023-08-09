@@ -38,7 +38,7 @@ void gsdc_ota_subsystem_initialize(gsdc_ota_configuration_file_descriptor_t * co
 
 	ESP_ERROR_CHECK(ret);
 	ESP_ERROR_CHECK(gsdc_ota_configure_wifi(ssid));
-	ESP_ERROR_CHECK(http_server_init(configuration));
+	ESP_ERROR_CHECK(gsdc_ota_http_server_init(configuration));
 	ESP_LOGW(OTA_SUBSYSTEM_TAG, "Wi-Fi SSID: %s", ssid);
 
 	/* Mark current app as valid */
@@ -51,4 +51,9 @@ void gsdc_ota_subsystem_initialize(gsdc_ota_configuration_file_descriptor_t * co
 			esp_ota_mark_app_valid_cancel_rollback();
 		}
 	}
+}
+
+void gsdc_ota_upload_firmware(const char * image, size_t length)
+{
+	ESP_ERROR_CHECK(gsdc_ota_save_firmware_image(image, length));
 }

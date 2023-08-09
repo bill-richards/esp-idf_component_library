@@ -11,6 +11,7 @@ extern "C" {
 
 void gsdc_ota_subsystem_initialize(gsdc_ota_configuration_file_descriptor_t * configurationDescriptor);
 
+void gsdc_ota_upload_firmware(const char * image, size_t length);
 
 #ifdef __cplusplus
 }

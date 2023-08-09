@@ -54,11 +54,25 @@ esp_err_t internal_configuration_get_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
+httpd_uri_t internal_configuration_get = {
+	.uri	  = "/identity",
+	.method   = HTTP_GET,
+	.handler  = internal_configuration_get_handler,
+	.user_ctx = NULL
+};
+
 esp_err_t internal_index_get_handler(httpd_req_t *req)
 {
 	httpd_resp_send(req, (const char *) index_html_start, index_html_end-index_html_start);
 	return ESP_OK;
 }
+
+httpd_uri_t internal_index_get = {
+	.uri	  = "/",
+	.method   = HTTP_GET,
+	.handler  = internal_index_get_handler,
+	.user_ctx = NULL
+};
 
 esp_err_t internal_configuration_post_handler(httpd_req_t *req)
 {
@@ -100,9 +114,13 @@ esp_err_t internal_configuration_post_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-/*
- * Handle OTA file upload
- */
+httpd_uri_t internal_configuration_post = {
+	.uri	  = "/identity",
+	.method   = HTTP_POST,
+	.handler  = internal_configuration_post_handler,
+	.user_ctx = NULL
+};
+
 esp_err_t internal_ota_post_handler(httpd_req_t *req)
 {
 	char buf[1000];
@@ -148,30 +166,6 @@ esp_err_t internal_ota_post_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-/*
- * HTTP Server
- */
-httpd_uri_t internal_index_get = {
-	.uri	  = "/",
-	.method   = HTTP_GET,
-	.handler  = internal_index_get_handler,
-	.user_ctx = NULL
-};
-
-httpd_uri_t internal_configuration_get = {
-	.uri	  = "/identity",
-	.method   = HTTP_GET,
-	.handler  = internal_configuration_get_handler,
-	.user_ctx = NULL
-};
-
-httpd_uri_t internal_configuration_post = {
-	.uri	  = "/identity",
-	.method   = HTTP_POST,
-	.handler  = internal_configuration_post_handler,
-	.user_ctx = NULL
-};
-
 httpd_uri_t internal_ota_post = {
 	.uri	  = "/ota",
 	.method   = HTTP_POST,
@@ -179,7 +173,8 @@ httpd_uri_t internal_ota_post = {
 	.user_ctx = NULL
 };
 
-esp_err_t http_server_init(gsdc_ota_configuration_file_t * configurationFile)
+
+esp_err_t gsdc_ota_http_server_init(gsdc_ota_configuration_file_t * configurationFile)
 {
 	Configuration_File = configurationFile;
 	static httpd_handle_t http_server = NULL;
@@ -225,4 +220,26 @@ esp_err_t gsdc_ota_configure_wifi(char * ssid)
 	res |= esp_wifi_start();
 
 	return res;
+}
+
+esp_err_t gsdc_ota_save_firmware_image(const char * image, size_t length)
+{
+	esp_err_t result = ESP_OK;
+	esp_ota_handle_t ota_handle;
+
+	const esp_partition_t *ota_partition = esp_ota_get_next_update_partition(NULL);
+	ESP_ERROR_CHECK(esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle));
+
+	result = esp_ota_write(ota_handle, (const void *)image, length);
+	if (result != ESP_OK) {
+		return result;
+	}
+	
+	if (esp_ota_end(ota_handle) != ESP_OK || esp_ota_set_boot_partition(ota_partition) != ESP_OK) {
+			return ESP_FAIL;
+	}
+
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	esp_restart();
+	return ESP_OK;
 }
