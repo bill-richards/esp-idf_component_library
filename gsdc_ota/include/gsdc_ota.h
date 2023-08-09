@@ -24,7 +24,7 @@ esp_err_t gsdc_ota_http_server_init(gsdc_ota_configuration_file_t * configuratio
 /**
  * @brief Internal use. Saves the binary image to the next OTA partition
  * 
- * @param image (char *) the new firmware image
+ * @param image (const char *) the new firmware image
  * @param length (size_t) the size of the new image
  */
 esp_err_t gsdc_ota_save_firmware_image(const char * image, size_t length);

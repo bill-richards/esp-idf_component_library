@@ -1,32 +1,74 @@
-#include "gsdc_ota.h"
-#include <string.h>
-#include <ctype.h>
+// //////////////////////////////////////////// //
+//                DEPENDENCIES                  //
+// //////////////////////////////////////////// //
+#include "gsdc_ota.h"							//
+#include <string.h>								//
+#include <ctype.h>								//
+//                                              //
+#include <freertos/FreeRTOS.h>					//
+#include <esp_http_server.h>					//
+#include <freertos/task.h>						//
+#include <esp_ota_ops.h>						//
+#include <esp_system.h>							//
+#include <nvs_flash.h>							//
+#include <sys/param.h>							//
+#include <esp_wifi.h>							//
+#include <esp_logging.h>						//
+#include <configuration_file.h>					//
+#include <gsdc_string_utils.h>					//
+// //////////////////////////////////////////// //
 
-#include <freertos/FreeRTOS.h>
-#include <esp_http_server.h>
-#include <freertos/task.h>
-#include <esp_ota_ops.h>
-#include <esp_system.h>
-#include <nvs_flash.h>
-#include <sys/param.h>
-#include <esp_wifi.h>
-#include <esp_logging.h>
-#include <configuration_file.h>
-#include <gsdc_string_utils.h>
+// //////////////////////////////////////////////////////////////////////// //
+//                       FORWARD DECLARATIONS                               //
+// //////////////////////////////////////////////////////////////////////// //
+//                                                                          //
+esp_err_t internal_configuration_get_handler(httpd_req_t *req);				//
+esp_err_t internal_index_get_handler(httpd_req_t *req);						//
+esp_err_t internal_configuration_post_handler(httpd_req_t *req);			//
+esp_err_t internal_ota_post_handler(httpd_req_t *req);						//
+//                                                                          //
+// //////////////////////////////////////////////////////////////////////// //
 
-/*
- * Serve OTA update portal (index.html)
- */
-extern const uint8_t index_html_start[] asm("_binary_index_html_start");
-extern const uint8_t index_html_end[] asm("_binary_index_html_end");
-/*
- * Serve Configuration portal (identity.html)
- */
-extern const uint8_t identity_html_start[] asm("_binary_identity_html_start");
-extern const uint8_t identity_html_end[] asm("_binary_identity_html_end");
-
-static const char * OTA_TAG = "ota-subsystem";
-gsdc_ota_configuration_file_t * Configuration_File;
+// //////////////////////////////////////////////////////////////////////////// //
+//                      LOCAL VARIABLES                             			//
+// //////////////////////////////////////////////////////////////////////////// //
+//																				//
+static const char * OTA_TAG = "ota-subsystem";									//
+// Serve OTA update portal (index.html)											//
+extern const uint8_t index_html_start[] asm("_binary_index_html_start");		//
+extern const uint8_t index_html_end[] asm("_binary_index_html_end");			//
+// Serve Configuration portal (identity.html)									//
+extern const uint8_t identity_html_start[] asm("_binary_identity_html_start");	//
+extern const uint8_t identity_html_end[] asm("_binary_identity_html_end");		//
+//																				//
+gsdc_ota_configuration_file_t * Configuration_File;								//
+//																				//
+httpd_uri_t internal_configuration_get = {										//
+	.uri	  = "/identity",													//
+	.method   = HTTP_GET,														//
+	.handler  = internal_configuration_get_handler,								//
+	.user_ctx = NULL															//
+};																				//
+httpd_uri_t internal_index_get = {												//
+	.uri	  = "/",															//
+	.method   = HTTP_GET,														//
+	.handler  = internal_index_get_handler,										//
+	.user_ctx = NULL															//
+};																				//
+httpd_uri_t internal_configuration_post = {										//
+	.uri	  = "/identity",													//
+	.method   = HTTP_POST,														//
+	.handler  = internal_configuration_post_handler,							//
+	.user_ctx = NULL															//
+};																				//
+httpd_uri_t internal_ota_post = {												//
+	.uri	  = "/ota",															//
+	.method   = HTTP_POST,														//
+	.handler  = internal_ota_post_handler,										//
+	.user_ctx = NULL															//
+};																				//
+//																				//
+// //////////////////////////////////////////////////////////////////////////// //
 
 esp_err_t internal_configuration_get_handler(httpd_req_t *req)
 {
@@ -54,25 +96,11 @@ esp_err_t internal_configuration_get_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-httpd_uri_t internal_configuration_get = {
-	.uri	  = "/identity",
-	.method   = HTTP_GET,
-	.handler  = internal_configuration_get_handler,
-	.user_ctx = NULL
-};
-
 esp_err_t internal_index_get_handler(httpd_req_t *req)
 {
 	httpd_resp_send(req, (const char *) index_html_start, index_html_end-index_html_start);
 	return ESP_OK;
 }
-
-httpd_uri_t internal_index_get = {
-	.uri	  = "/",
-	.method   = HTTP_GET,
-	.handler  = internal_index_get_handler,
-	.user_ctx = NULL
-};
 
 esp_err_t internal_configuration_post_handler(httpd_req_t *req)
 {
@@ -113,13 +141,6 @@ esp_err_t internal_configuration_post_handler(httpd_req_t *req)
 
 	return ESP_OK;
 }
-
-httpd_uri_t internal_configuration_post = {
-	.uri	  = "/identity",
-	.method   = HTTP_POST,
-	.handler  = internal_configuration_post_handler,
-	.user_ctx = NULL
-};
 
 esp_err_t internal_ota_post_handler(httpd_req_t *req)
 {
@@ -166,34 +187,11 @@ esp_err_t internal_ota_post_handler(httpd_req_t *req)
 	return ESP_OK;
 }
 
-httpd_uri_t internal_ota_post = {
-	.uri	  = "/ota",
-	.method   = HTTP_POST,
-	.handler  = internal_ota_post_handler,
-	.user_ctx = NULL
-};
 
+// //////////////////////////////////////////////////////////////////////// //
+//                       		PUBLIC API                               	//
+// //////////////////////////////////////////////////////////////////////// //
 
-esp_err_t gsdc_ota_http_server_init(gsdc_ota_configuration_file_t * configurationFile)
-{
-	Configuration_File = configurationFile;
-	static httpd_handle_t http_server = NULL;
-
-	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
-	if (httpd_start(&http_server, &config) == ESP_OK) {
-		httpd_register_uri_handler(http_server, &internal_index_get);
-		httpd_register_uri_handler(http_server, &internal_configuration_get);
-		httpd_register_uri_handler(http_server, &internal_configuration_post);
-		httpd_register_uri_handler(http_server, &internal_ota_post);
-	}
-
-	return http_server == NULL ? ESP_FAIL : ESP_OK;
-}
-
-/*
- * WiFi configuration
- */
 esp_err_t gsdc_ota_configure_wifi(char * ssid)
 {
 	esp_err_t res = ESP_OK;
@@ -220,6 +218,23 @@ esp_err_t gsdc_ota_configure_wifi(char * ssid)
 	res |= esp_wifi_start();
 
 	return res;
+}
+
+esp_err_t gsdc_ota_http_server_init(gsdc_ota_configuration_file_t * configurationFile)
+{
+	Configuration_File = configurationFile;
+	static httpd_handle_t http_server = NULL;
+
+	httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+
+	if (httpd_start(&http_server, &config) == ESP_OK) {
+		httpd_register_uri_handler(http_server, &internal_index_get);
+		httpd_register_uri_handler(http_server, &internal_configuration_get);
+		httpd_register_uri_handler(http_server, &internal_configuration_post);
+		httpd_register_uri_handler(http_server, &internal_ota_post);
+	}
+
+	return http_server == NULL ? ESP_FAIL : ESP_OK;
 }
 
 esp_err_t gsdc_ota_save_firmware_image(const char * image, size_t length)
