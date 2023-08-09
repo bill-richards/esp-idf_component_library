@@ -1,5 +1,5 @@
 SET(app_sources
-    gsdc_utils.c
+    gsdc_string_utils.c
 )
 
 idf_component_register(SRCS ${app_sources}

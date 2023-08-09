@@ -45,12 +45,13 @@
                 </tr>
                 <tr>
                     <td class="label">IIC address</td>
-                    <td><input class="input" type="text" id="iica" oninput="iic_address_change()" ></td>
+                    <td><input class="input" type="text" id="iica"></td>
+                    <!-- <td><input class="input" type="text" id="iica" oninput="iic_address_change()" ></td> -->
                 </tr>
                 <tr>
                     <td colspan="2" align="right">
                         <label class="label" for="is_master">Is IIC Master</label>
-                        <input type="checkbox" id="is_master" onchange="role_change()" />
+                        <input CONFIGISMASTER type="checkbox" id="is_master" onchange="role_change()" />
                     </td>
                 </tr>
                 <tr id="client_list_view">
@@ -72,12 +73,13 @@
                 document.querySelector('input[id="ssid"]').value = "CONFIGSSID";
                 document.querySelector('input[id="is_unique"]').checked = true;
                 unique_change();
+                role_change();
             }
 
             function unique_change(){
                 mIsUnique = document.querySelector('input[id="is_unique"]').checked;
                 ap_change(); 
-                iic_address_change();
+                //iic_address_change();
             }
 
             function iic_address_change(){

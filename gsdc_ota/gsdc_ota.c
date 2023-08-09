@@ -37,16 +37,20 @@ esp_err_t internal_configuration_get_handler(httpd_req_t *req)
 	config_key_value_pair_t pair;
 	Configuration_File->get_configuration_item("IIC", &pair, Configuration_File);
 	char * modified_html = gsdc_string_utils_replace_substring(html, "CONFIGIICADDRESS", pair.Value);
+	free(html);
 
-	Configuration_File->get_configuration_item("CLIENTS", &pair, Configuration_File);
-	modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGCLIENTLIST", pair.Value);
+	if(Configuration_File->get_configuration_item("CLIENTS", &pair, Configuration_File)) {
+		modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGCLIENTLIST", pair.Value);
+		modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGISMASTER", "checked");
+	} else {
+		modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGISMASTER", " ");
+	}
 
 	Configuration_File->get_configuration_item("SSID", &pair, Configuration_File);
 	modified_html = gsdc_string_utils_replace_substring(modified_html, "CONFIGSSID", pair.Value);
 
 	httpd_resp_send(req, modified_html, strlen(modified_html));
 	free(modified_html);
-	free(html);
 	return ESP_OK;
 }
 

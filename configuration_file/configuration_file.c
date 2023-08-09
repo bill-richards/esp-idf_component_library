@@ -49,11 +49,12 @@ void configuration_file_clear_all_entries(gsdc_configuration_file_t * configurat
     configuration_file->Configuration_Items = calloc(SPIFFS_MAXIMUM_LINE_COUNT, sizeof(config_key_value_pair_t));
 }
 
+// remember to free() returned *pointer
 char * configuration_file_get_file_path(gsdc_configuration_file_t * configuration_file)
 {
-    char file_path[CONFIGURATION_FILE_MAXIMUM_FILE_PATH_LENGTH];
+    char * file_path = calloc(CONFIGURATION_FILE_MAXIMUM_FILE_PATH_LENGTH, sizeof(char));
     sprintf(file_path, "%s/%s", configuration_file->BasePath, configuration_file->Name);
-    return &file_path[0];
+    return file_path;
 }
 
 void configuration_file_read(gsdc_configuration_file_t * configuration_file)
