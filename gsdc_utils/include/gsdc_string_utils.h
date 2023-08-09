@@ -9,6 +9,10 @@ extern "C" {
 /* IMPORTANT: be sure to free() the returned string after use */
 char * gsdc_string_utils_url_decode(char *str);
 
+/* Returns a url-encoded version of str */
+/* IMPORTANT: be sure to free() the returned string after use */
+char * gsdc_string_utils_url_encode(char * str);
+
 /* IMPORTANT: be sure to free() the returned string after use */
 char * gsdc_string_utils_replace_substring(char* input_string, char* to_be_replaced, char* replace_with);
 
