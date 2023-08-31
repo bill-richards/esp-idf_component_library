@@ -1,14 +1,11 @@
-SET(app_sources
-        gsdc_ota.c
-        gsdc_ota_subsystem.c
-)
+FILE(GLOB_RECURSE SOURCES *.c)
 
 SET(embeded_files
         include/web/index.html
         include/web/identity.html
 )
 
-SET(components
+SET(REQUIRED_COMPONENTS
         gsdc_utils
         configuration_file
         esp_includes
@@ -19,10 +16,8 @@ SET(components
         freertos
 )
 
-#set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
-
-idf_component_register(SRCS ${app_sources}
-                       INCLUDE_DIRS "include"
-                       REQUIRES ${components}
+idf_component_register(SRCS ${SOURCES}
+                       INCLUDE_DIRS include
+                       REQUIRES ${REQUIRED_COMPONENTS}
                        EMBED_TXTFILES ${embeded_files}
 )

@@ -1,7 +1,5 @@
-SET(app_sources
-    gsdc_string_utils.c
-)
+FILE(GLOB_RECURSE SOURCES *.c)
 
-idf_component_register(SRCS ${app_sources}
-                       INCLUDE_DIRS "include"
+idf_component_register(SRCS ${SOURCES}
+                       INCLUDE_DIRS include
 )

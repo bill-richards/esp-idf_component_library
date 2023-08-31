@@ -1,4 +1,4 @@
-SET(SOURCES gsdc_bme280_iic.cpp )
+FILE(GLOB_RECURSE SOURCES *.cpp)
 
 SET(REQUIRED_COMPONENTS 
     gsdc_bme280

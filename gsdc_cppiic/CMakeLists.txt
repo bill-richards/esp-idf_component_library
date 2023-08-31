@@ -1,9 +1,8 @@
-SET(SOURCES gsdc_cppiic.cpp )
+FILE(GLOB_RECURSE SOURCES *.cpp)
 
-
-set(components driver)
+set(REQUIRED_COMPONENTS driver)
 
 idf_component_register(SRCS ${SOURCES}
     INCLUDE_DIRS include
-    REQUIRES ${components}
+    REQUIRES ${REQUIRED_COMPONENTS}
 )

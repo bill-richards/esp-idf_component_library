@@ -1,4 +1,4 @@
+FILE(GLOB_RECURSE SOURCES *.cpp)
 
-
-idf_component_register(SRCS "gsdc_sensor.cpp" 
+idf_component_register(SRCS ${SOURCES} 
                        INCLUDE_DIRS include)

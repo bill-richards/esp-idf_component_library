@@ -1,10 +1,10 @@
-SET(SOURCES gsdc_bme280.cpp)
+FILE(GLOB_RECURSE SOURCES *.cpp)
 
 SET(REQUIRED_COMPONENTS 
     gsdc_telemetry
 )
 
-idf_component_register(SRCS "gsdc_bme280.cpp"
+idf_component_register(SRCS ${SOURCES}
                         INCLUDE_DIRS include
                         REQUIRES ${REQUIRED_COMPONENTS}
 )

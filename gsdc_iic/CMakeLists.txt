@@ -1,13 +1,6 @@
+FILE(GLOB_RECURSE SOURCES *.c)
 
-SET(app_sources
-        "iic_client.c"
-        "iic_common.c"
-        "iic_configuration.c"
-        "iic_master.c"
-        "iic_transmission.c"
-)
-
-set(components 
+set(REQUIRED_COMPONENTS 
         log
         driver
         configuration_file
@@ -16,6 +9,6 @@ set(components
         freertos
 )
 
-idf_component_register(SRCS ${app_sources}
-                        INCLUDE_DIRS "include"
-                        REQUIRES ${components})
+idf_component_register(SRCS ${SOURCES}
+                        INCLUDE_DIRS include
+                        REQUIRES ${REQUIRED_COMPONENTS})

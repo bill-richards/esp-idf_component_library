@@ -1,9 +1,12 @@
-set(components 
-        "driver" 
-        "esp_includes"
-        "freertos"
-        "newlib")
+FILE(GLOB_RECURSE SOURCES *.c)
 
-idf_component_register(SRCS "led_controller.c"
-                    INCLUDE_DIRS "include"
-                    REQUIRES ${components})
+set(REQUIRED_COMPONENTS 
+        driver
+        esp_includes
+        freertos
+        newlib
+)
+
+idf_component_register(SRCS ${SOURCES}
+                    INCLUDE_DIRS include
+                    REQUIRES ${REQUIRED_COMPONENTS})
