@@ -8,12 +8,12 @@ SET(app_sources
 )
 
 set(components 
-        "log" 
-        "driver" 
-        "configuration_file"
-        "esp_includes"
-        "led_controller"
-        "freertos"
+        log
+        driver
+        configuration_file
+        esp_includes
+        led_controller
+        freertos
 )
 
 idf_component_register(SRCS ${app_sources}
