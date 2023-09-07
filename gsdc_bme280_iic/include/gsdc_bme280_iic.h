@@ -7,6 +7,11 @@
 namespace gsdc_bme280
 {
     typedef gsdc_telemetry::GSDC_SENSOR GSDC_SENSOR;
+    typedef gsdc_telemetry::Gpio_t Gpio_t;
+
+    static const int SDA_PIN_INDEX = 0;
+    static const int SCL_PIN_INDEX = 1;
+
 
     class BME280IIC final : public BME280
     {
@@ -17,6 +22,13 @@ namespace gsdc_bme280
         float i2cPressure{};
         int i2cHumidity{};
         int i2cId{};
+        bool _gpioHasBeenSet = false;
+        bool _initialized = false;
+        int SDA_PIN{};
+        int SCL_PIN{};
+    public:
+        // static const int SDA_PIN_INDEX = 0;
+        // static const int SCL_PIN_INDEX = 1;
 
     protected:
         esp_err_t writeByteData(const uint8_t reg, const uint8_t value);
@@ -24,10 +36,17 @@ namespace gsdc_bme280
         int readWordData(const uint8_t reg);
         esp_err_t readBlockData(const uint8_t reg, uint8_t *buf, const int length);
 
-    public:
+    private:
         void InitIIc(gsdc_cppiic::IIC *i_i2c, const uint8_t dev_addr = 0x76);
-        virtual void ReadData(char data[]) override;
-        virtual void Initialize(void) override;
+
+    public:
+        Gpio_t * GetGpioSetupStruct(void) override;
+        void Initialize(void) override;
+        bool IsInitialized() override;
+        void ReadData(char *) override;
+        void SetGpio(Gpio_t pins[]) override;
+        
+        ~BME280IIC();
     };
     
 } // namespace gsdc_bme280

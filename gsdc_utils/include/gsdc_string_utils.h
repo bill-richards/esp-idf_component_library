@@ -30,6 +30,9 @@ char * gsdc_string_utils_url_encode(char * str);
  */
 char * gsdc_string_utils_replace_substring(char * input_string, char * to_be_replaced, char * replace_with);
 
+char from_hex(char ch);
+char to_hex(char code);
+
 #ifdef __cplusplus
 }
 #endif

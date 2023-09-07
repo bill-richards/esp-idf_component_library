@@ -3,12 +3,21 @@
 
 namespace gsdc_telemetry
 {
+    typedef struct {
+        int PinNumber;
+    } Gpio_t;
 
     class GSDC_SENSOR
     {
     public:
-        virtual void ReadData(char data[]) = 0;
+        virtual bool IsInitialized() = 0;
         virtual void Initialize(void) = 0;
+        /**
+         * @brief The caller is responsible for freeing the returned char *
+         */
+        virtual void ReadData(char * ) = 0;
+        virtual Gpio_t * GetGpioSetupStruct(void) = 0;
+        virtual void SetGpio(Gpio_t pins[]) = 0;
         virtual ~GSDC_SENSOR();
     };
 

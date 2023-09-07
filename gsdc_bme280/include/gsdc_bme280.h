@@ -141,7 +141,6 @@ namespace gsdc_bme280
         bool ImUpdateBusy(void);        // check status (0xF3) bit 0
         esp_err_t Reset(void);          // write 0xB6 into reset (0xE0)
 
-        virtual void ReadData(char data[]) override = 0;
         virtual ~BME280() override;
     };
 } // namespace gsdc_bme280

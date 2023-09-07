@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <esp_logging.h>
+#include <gsdc_string_utils.h>
 
 #include "gsdc_bme280_iic.h"
 
@@ -29,31 +30,65 @@ namespace gsdc_bme280
         return i2c->ReadRegisterMultipleBytes(_devAddress, reg, buf, length);
     }
 
-    void BME280IIC::InitIIc(gsdc_cppiic::IIC *i_i2c, const uint8_t dev_addr)
+    void BME280IIC::InitIIc(gsdc_cppiic::IIC * i_i2c, const uint8_t dev_addr)
     {
         i2c = i_i2c;
         _devAddress = dev_addr;
     }
 
-    void BME280IIC::ReadData(char data[])
+    void BME280IIC::ReadData(char * data)
     {
-        // strcpy(data, "This is not test data, this is data collected outside of the iic component library, and transmitted by the iic component");
+        if(!_initialized)
+        {
+            ESP_LOGE(BME280_IIC_TAG, "Sensor must be initialized before use");
+            return;
+        }
+
         GetAllResults(&i2cTemperature, &i2cHumidity, &i2cPressure);
-        // char results[1024];
-        sprintf(data, "Temp[%f],Humidity[%u],Pressure[%f],Id[%x]%s", i2cTemperature, i2cHumidity, i2cPressure, i2cId, "\0");
-        // strcpy(data, results);
+        sprintf(data, "T:%.2f|H:%u|P:%f%s", i2cTemperature, i2cHumidity, i2cPressure, "\0");
+        return;
     }
 
     void BME280IIC::Initialize(void)
     {
-        ESP_LOGI(BME280_IIC_TAG, "Starting the IIC-Client thread ...");
+        ESP_LOGI(BME280_IIC_TAG, "Initializing the BME280 Sensor ...");
+
+        if(!_gpioHasBeenSet)
+        {
+            ESP_LOGE(BME280_IIC_TAG, "GPIO must be set before initialization");
+            return;
+        }
 
         i2c = new gsdc_cppiic::IIC(I2C_NUM_1);
-        i2c->InitMaster(26, 25, 400000, true, true);
+        i2c->InitMaster(SDA_PIN, SCL_PIN, 400000, true, true);
         InitIIc(i2c, 0x76);
         Init();
         SetMode(1);
         SetConfigFilter(1);
+        _initialized = true;
+    }
+
+    bool BME280IIC::IsInitialized() { return _initialized; }
+
+    Gpio_t * BME280IIC::GetGpioSetupStruct(void)
+    {
+        Gpio_t * pins = (Gpio_t *)calloc(2, sizeof(Gpio_t));
+        return pins;
+    }
+
+    void BME280IIC::SetGpio(Gpio_t * pins)
+    {
+        ESP_LOGI(BME280_IIC_TAG, "Setting up Gpio ...");
+        SDA_PIN = pins[SDA_PIN_INDEX].PinNumber; // 26
+        SCL_PIN = pins[SCL_PIN_INDEX].PinNumber; // 25
+        free(pins);
+
+        _gpioHasBeenSet = true;
+    }
+
+    BME280IIC::~BME280IIC()
+    {
+        free(i2c);
     }
 
 } // namespace gsdc_bme280
