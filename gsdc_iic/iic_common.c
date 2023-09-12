@@ -4,7 +4,7 @@
 
 SemaphoreHandle_t print_mux = NULL;
 
-void take_semaphore() 
+void take_print_semaphore() 
 {
     if(print_mux == NULL)
         print_mux = xSemaphoreCreateMutex();
@@ -12,7 +12,7 @@ void take_semaphore()
     xSemaphoreTake(print_mux, portMAX_DELAY);
 }
 
-void give_semaphore()
+void give_print_semaphore()
 {
     xSemaphoreGive(print_mux);
 }

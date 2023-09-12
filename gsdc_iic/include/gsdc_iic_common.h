@@ -70,9 +70,9 @@ typedef void (*gsdc_iic_command_received_event_handler_t)(const char * command);
 // @brief function to show buffer contents
 void display_buffer_contents(uint8_t *buf, int len);
 // @brief Give the semaphore
-void give_semaphore();
+void give_print_semaphore();
 // @brief Take the semaphore
-void take_semaphore();
+void take_print_semaphore();
 
 #ifdef __cplusplus
 }
