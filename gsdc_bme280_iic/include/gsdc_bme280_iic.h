@@ -4,8 +4,9 @@
 #include <gsdc_bme280.h>
 #include <gsdc_cppiic.h>
 
-namespace gsdc_bme280
-{
+namespace gsdc_sensor { 
+    namespace bme280
+    {
     typedef gsdc_telemetry::GSDC_SENSOR GSDC_SENSOR;
     typedef gsdc_telemetry::Gpio_t Gpio_t;
 
@@ -49,6 +50,7 @@ namespace gsdc_bme280
         ~BME280IIC();
     };
     
-} // namespace gsdc_bme280
+    } // namespace bme280
+} // namespace gsdc_sensor
 
 #endif // __GSDC_BME280_IIC_H__
