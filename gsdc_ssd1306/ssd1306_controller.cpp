@@ -113,6 +113,7 @@ namespace gsdc_oled {
         ssd1306_display_text(pScreen, lineNumber, (char*)blankScreenLine, strlen(blankScreenLine), invertText);
         give_display_semaphore();
 
+        free(displayText);
         free(scrollLineInfo);
         free(output_text);
         vTaskDelete(scrolling_lines[lineNumber][0]);
