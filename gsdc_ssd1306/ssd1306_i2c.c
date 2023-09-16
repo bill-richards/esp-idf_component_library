@@ -13,15 +13,10 @@
 i2c_port_t _i2cPort = 1;
 uint32_t _i2cClockFrequency = 400000; /*!< I2C clock of SSD1306 can run at 400 kHz max. */
 
-void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset_gpio_pin)
-{
-	gsdc_ssd1306_i2c_master_init_p(dev, sda, scl, reset_gpio_pin, _i2cPort, _i2cClockFrequency);
-}
-
-void gsdc_ssd1306_i2c_master_init_p(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset, i2c_port_t i2cPort, uint32_t i2cClockFrequency)
+void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset, i2c_port_t i2cPort)
 {
 	_i2cPort = i2cPort;
-	_i2cClockFrequency = i2cClockFrequency;
+	// _i2cClockFrequency = i2cClockFrequency;
 
 	i2c_config_t i2c_config = {
 		.mode = I2C_MODE_MASTER,
@@ -29,7 +24,7 @@ void gsdc_ssd1306_i2c_master_init_p(SSD1306_t * dev, int16_t sda, int16_t scl, i
 		.scl_io_num = scl,
 		.sda_pullup_en = GPIO_PULLUP_ENABLE,
 		.scl_pullup_en = GPIO_PULLUP_ENABLE,
-		.master.clk_speed = i2cClockFrequency
+		.master.clk_speed = _i2cClockFrequency
 	};
 	i2c_param_config(i2cPort, &i2c_config);
 	i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0);

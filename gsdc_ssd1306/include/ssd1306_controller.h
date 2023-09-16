@@ -23,6 +23,7 @@ namespace gsdc_oled {
         } SPEED;
 
         const int16_t DEFAULT_RESET_PIN = 15;
+        const int16_t DEFAULT_IIC_PORT = 1;
 
         class SSD1306Controller {
         public:
@@ -45,7 +46,7 @@ namespace gsdc_oled {
              */
             void DisplayUpTime(void);
             void HorizontalScrollText(char text[], int lineNumber, SPEED speed, bool continuous_scrolling = false, bool invert = false);
-            bool Initialize(bool flipDisplay, int16_t data_pin, int16_t clock_pin, int16_t reset_pin = DEFAULT_RESET_PIN);
+            bool Initialize(bool flipDisplay, int16_t data_pin, int16_t clock_pin, i2c_port_t i2cPort = DEFAULT_IIC_PORT, int16_t reset_pin = DEFAULT_RESET_PIN);
             void StopHorizontalScrollForLine(int lineNumber);
         };
 

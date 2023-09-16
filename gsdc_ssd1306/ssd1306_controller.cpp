@@ -125,9 +125,9 @@ namespace gsdc_oled {
         xTaskCreatePinnedToCore(display_time_task, "display_time_task", 2048, &_oledScreen, 2, NULL, 0);
     }
 
-    bool SSD1306Controller::Initialize(bool flipDisplay, int16_t data_pin, int16_t clock_pin, int16_t reset_pin) {
+    bool SSD1306Controller::Initialize(bool flipDisplay, int16_t data_pin, int16_t clock_pin, i2c_port_t i2cPort, int16_t reset_pin) {
 
-        gsdc_ssd1306_i2c_master_init(&_oledScreen, data_pin, clock_pin, reset_pin);
+        gsdc_ssd1306_i2c_master_init(&_oledScreen, data_pin, clock_pin, reset_pin, i2cPort);
         if(flipDisplay) {
             _oledScreen._flip = true;
             ESP_LOGW(OLED_TAG, "Flip upside down");

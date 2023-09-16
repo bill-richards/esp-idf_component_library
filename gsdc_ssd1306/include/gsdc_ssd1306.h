@@ -143,9 +143,9 @@ void ssd1306_dump_page(SSD1306_t * dev, int page, int seg);
  * @param scl (int16_t) The IIC clock pin
  * @param reset (int16_t) The microprocessor's reset pin
  */
-void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
+//void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
 /**
- * @brief initializes the IIC interface. Defaults to IIC Port 1
+ * @brief initializes the IIC interface. 
  * 
  * @param dev (SSD1306_t *) Pointer to the display struct
  * @param sda (int16_t) The IIC data pin
@@ -154,7 +154,8 @@ void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int
  * @param i2cPort (i2c_port_t) The IIC Port to initialize and use for comms
  * @param i2cClockFrequency (uint32_t) The IIC Clock frequency for the OLED display
  */
-void gsdc_ssd1306_i2c_master_init_p(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset, i2c_port_t i2cPort, uint32_t i2cClockFrequency);
+// void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset, i2c_port_t i2cPort, uint32_t i2cClockFrequency );
+void gsdc_ssd1306_i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset, i2c_port_t i2cPort);
 void gsdc_ssd1306_i2c_init(SSD1306_t * dev, int width, int height);
 void gsdc_ssd1306_i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
 void gsdc_ssd1306_i2c_contrast(SSD1306_t * dev, int contrast);
