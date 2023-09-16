@@ -4,7 +4,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#ifdef CONFIG_GSDC_SPIFFS_COMPILE_FOR_IDF_VERSION_4_4_5
+#include "esp_spiffs.h"
+#else
 #include "esp_vfs.h"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {

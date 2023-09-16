@@ -1,5 +1,11 @@
 menu "GSDC SPIFFS Configuration"
 
+    config GSDC_SPIFFS_COMPILE_FOR_IDF_VERSION_4_4_5
+        bool "Compile for ESP-IDF version 4.5.5"
+        default n
+        help
+            If this config item is set then the target ESP-IDF is Version 4.5.5
+
     config GSDC_SPIFFS_CHECK_ON_START
         bool "Run SPIFFS_check on every start-up"
         default y
