@@ -23,7 +23,7 @@ namespace gsdc_oled {
         } SPEED;
 
         const int16_t DEFAULT_RESET_PIN = 15;
-        const int16_t DEFAULT_IIC_PORT = 1;
+        const i2c_port_t DEFAULT_IIC_PORT = i2c_port_t::I2C_NUM_1;
 
         class SSD1306Controller {
         public:
